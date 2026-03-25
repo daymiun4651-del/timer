@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIME UNTIL WE WIN</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@200;400;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --gold:#f5c842;
+    --gold-dim:#c9a020;
+    --bg:#07070a;
+    --white:#eee;
+  }
+
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);font-family:'Oswald',sans-serif}
+
+  /* ── animated grain overlay ── */
+  body::before{
+    content:'';position:fixed;inset:0;z-index:100;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.04;
+    animation:grain 0.5s steps(1) infinite;
+  }
+  @keyframes grain{
+    0%{transform:translate(0,0)}
+    10%{transform:translate(-2%,-3%)}
+    30%{transform:translate(3%,2%)}
+    50%{transform:translate(-1%,4%)}
+    70%{transform:translate(4%,-1%)}
+    100%{transform:translate(1%,3%)}
+  }
+
+  /* ── radial glow behind timer ── */
+  .glow{
+    position:fixed;top:50%;left:50%;
+    width:120vmax;height:120vmax;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle,rgba(245,200,66,.08) 0%,transparent 55%);
+    pointer-events:none;z-index:0;
+    animation:pulse-glow 4s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-glow{
+    0%{opacity:.6;transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}
+  }
+
+  /* ── scanlines ── */
+  .scanlines{
+    position:fixed;inset:0;z-index:99;pointer-events:none;
+    background:repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.06) 2px,
+      rgba(0,0,0,.06) 4px
+    );
+  }
+
+  /* ── vignette ── */
+  .vignette{
+    position:fixed;inset:0;z-index:98;pointer-events:none;
+    background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.7) 100%);
+  }
+
+  /* ── particles ── */
+  .particles{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .particle{
+    position:absolute;
+    width:2px;height:2px;
+    background:var(--gold);
+    border-radius:50%;
+    opacity:0;
+    animation:float-up linear infinite;
+  }
+  @keyframes float-up{
+    0%{opacity:0;transform:translateY(0) scale(1)}
+    10%{opacity:.6}
+    90%{opacity:.3}
+    100%{opacity:0;transform:translateY(-100vh) scale(0)}
+  }
+
+  /* ── main layout ── */
+  .container{
+    position:relative;z-index:10;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    height:100%;
+    padding:2rem;
+    text-align:center;
+  }
+
+  /* ── headline ── */
+  .headline{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(1.8rem,5vw,4.5rem);
+    letter-spacing:.35em;
+    text-transform:uppercase;
+    color:var(--gold);
+    text-shadow:0 0 40px rgba(245,200,66,.35),0 0 80px rgba(245,200,66,.12);
+    margin-bottom:1rem;
+    opacity:0;
+    animation:fade-down .8s ease-out .3s forwards;
+  }
+  @keyframes fade-down{
+    from{opacity:0;transform:translateY(-30px);filter:blur(8px)}
+    to{opacity:1;transform:translateY(0);filter:blur(0)}
+  }
+
+  .subtitle{
+    font-weight:200;
+    font-size:clamp(.7rem,1.4vw,1rem);
+    letter-spacing:.6em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.3);
+    margin-bottom:3rem;
+    opacity:0;
+    animation:fade-down .8s ease-out .6s forwards;
+  }
+
+  /* ── timer ── */
+  .timer{
+    display:flex;
+    gap:clamp(.8rem,3vw,3rem);
+    opacity:0;
+    animation:scale-in 1s cubic-bezier(.16,1,.3,1) .9s forwards;
+  }
+  @keyframes scale-in{
+    from{opacity:0;transform:scale(.85);filter:blur(6px)}
+    to{opacity:1;transform:scale(1);filter:blur(0)}
+  }
+
+  .unit{
+    display:flex;flex-direction:column;align-items:center;
+    min-width:clamp(60px,14vw,160px);
+  }
+  .digit{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(3.5rem,13vw,11rem);
+    line-height:1;
+    color:var(--white);
+    text-shadow:0 0 30px rgba(245,200,66,.15);
+    transition:all .3s ease;
+    position:relative;
+  }
+  .digit.tick{
+    animation:tick .4s ease;
+  }
+  @keyframes tick{
+    0%{transform:scaleY(1)}
+    30%{transform:scaleY(.88);opacity:.7}
+    100%{transform:scaleY(1);opacity:1}
+  }
+
+  .label{
+    font-weight:200;
+    font-size:clamp(.55rem,1.2vw,.9rem);
+    letter-spacing:.5em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.25);
+    margin-top:.5rem;
+  }
+
+  /* ── separators ── */
+  .sep{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(3rem,10vw,9rem);
+    color:var(--gold-dim);
+    align-self:flex-start;
+    padding-top:.1em;
+    animation:blink 1.2s ease-in-out infinite;
+  }
+  @keyframes blink{
+    0%,100%{opacity:1}
+    50%{opacity:.2}
+  }
+
+  /* ── bottom bar ── */
+  .bar{
+    position:fixed;bottom:0;left:0;right:0;height:3px;z-index:50;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    opacity:.4;
+  }
+  .bar-top{
+    position:fixed;top:0;left:0;right:0;height:1px;z-index:50;
+    background:linear-gradient(90deg,transparent,rgba(245,200,66,.3),transparent);
+  }
+
+  /* ── win state ── */
+  .win-state{display:none;flex-direction:column;align-items:center;justify-content:center}
+  .win-state.active{display:flex}
+  .win-text{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(3rem,12vw,10rem);
+    letter-spacing:.15em;
+    color:var(--gold);
+    text-shadow:0 0 60px rgba(245,200,66,.5),0 0 120px rgba(245,200,66,.2);
+    animation:win-pulse 2s ease-in-out infinite alternate;
+  }
+  @keyframes win-pulse{
+    from{text-shadow:0 0 60px rgba(245,200,66,.5),0 0 120px rgba(245,200,66,.2)}
+    to{text-shadow:0 0 100px rgba(245,200,66,.8),0 0 200px rgba(245,200,66,.4)}
+  }
+
+  .timer-wrap{display:flex;flex-direction:column;align-items:center}
+  .timer-wrap.hidden{display:none}
+
+  /* ── mobile tweaks ── */
+  @media(max-width:480px){
+    .sep{padding-top:.05em}
+    .label{letter-spacing:.3em;margin-top:.3rem}
+    .subtitle{letter-spacing:.3em;margin-bottom:2rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+<div class="bar-top"></div>
+<div class="bar"></div>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+  <div class="timer-wrap" id="timerWrap">
+    <h1 class="headline">Time Until We Win</h1>
+    <p class="subtitle">Stand by</p>
+    <div class="timer" id="timer">
+      <div class="unit">
+        <span class="digit" id="days">00</span>
+        <span class="label">Days</span>
+      </div>
+      <span class="sep">:</span>
+      <div class="unit">
+        <span class="digit" id="hours">00</span>
+        <span class="label">Hours</span>
+      </div>
+      <span class="sep">:</span>
+      <div class="unit">
+        <span class="digit" id="minutes">00</span>
+        <span class="label">Minutes</span>
+      </div>
+      <span class="sep">:</span>
+      <div class="unit">
+        <span class="digit" id="seconds">00</span>
+        <span class="label">Seconds</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="win-state" id="winState">
+    <div class="win-text">WE WON</div>
+  </div>
+</div>
+
+<script>
+  // Target: March 26, 2026 4:20 PM EST (UTC-5)
+  const TARGET = new Date('2026-03-26T16:20:00-05:00').getTime();
+
+  const $d = document.getElementById('days');
+  const $h = document.getElementById('hours');
+  const $m = document.getElementById('minutes');
+  const $s = document.getElementById('seconds');
+  const prev = {d:'',h:'',m:'',s:''};
+
+  function pad(n){ return String(n).padStart(2,'0') }
+
+  function tickEl(el){
+    el.classList.remove('tick');
+    void el.offsetWidth;
+    el.classList.add('tick');
+  }
+
+  function update(){
+    const diff = TARGET - Date.now();
+    if(diff <= 0){
+      document.getElementById('timerWrap').classList.add('hidden');
+      document.getElementById('winState').classList.add('active');
+      return;
+    }
+    const s = Math.floor(diff/1000);
+    const d = pad(Math.floor(s/86400));
+    const h = pad(Math.floor((s%86400)/3600));
+    const m = pad(Math.floor((s%3600)/60));
+    const sc = pad(s%60);
+
+    if(d!==prev.d){$d.textContent=d;tickEl($d);prev.d=d}
+    if(h!==prev.h){$h.textContent=h;tickEl($h);prev.h=h}
+    if(m!==prev.m){$m.textContent=m;tickEl($m);prev.m=m}
+    if(sc!==prev.s){$s.textContent=sc;tickEl($s);prev.s=sc}
+
+    requestAnimationFrame(update);
+  }
+  update();
+
+  // ── particles ──
+  const pContainer = document.getElementById('particles');
+  function spawnParticle(){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const x = Math.random()*100;
+    const dur = 6 + Math.random()*8;
+    const size = 1 + Math.random()*2;
+    p.style.cssText = `left:${x}%;bottom:-10px;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:0s;`;
+    pContainer.appendChild(p);
+    setTimeout(()=>p.remove(), dur*1000);
+  }
+  setInterval(spawnParticle, 300);
+  for(let i=0;i<15;i++) setTimeout(spawnParticle, i*200);
+</script>
+</body>
+</html>
